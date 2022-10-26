@@ -46,12 +46,14 @@ if __name__=='__main__':
   graph = torch.jit.trace(model,fake_input)
   #main function
   mod, params = relay.frontend.from_pytorch(graph, shape_list)
+  visualizer=RelayVisualizer()
+  visualizer.visualize(mod,path="visualizes/simpleNN.prototxt")
   #optimize the mod
   #step 1 create target
   target = tvm.target.Target("llvm", host="llvm")
   #step 1 create PassContext
-  with tvm.transform.PassContext(opt_level=3):
+  #with tvm.transform.PassContext(opt_level=3):
     #step 3 optimize
     #mod,params=auto_optimize(mod,target,params)
-    mod,params=debug_optimize(mod,target,params)
+    #mod,params=debug_optimize(mod,target,params)
   #print("optimize func "+str(mod["main"]))
