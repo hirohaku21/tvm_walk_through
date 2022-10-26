@@ -27,6 +27,9 @@ def debug_optimize(mod,target,params):
   return mod,params
 
 if __name__=='__main__':
+  #prepare files
+  resnet_before_opt = open('resnet_before_optimization.txt', 'w')
+  resnet_after_opt = open('resnet_after_optimization.txt', 'w')
   #prepare model and input
   model = models.resnet18(pretrained=True)
   shape_list = [("input0",(1,3,224,224))]
@@ -34,7 +37,11 @@ if __name__=='__main__':
   graph = torch.jit.trace(model,fake_input)
   #main function
   mod, params = relay.frontend.from_pytorch(graph, shape_list)
+  resnet_before_opt.write(str(mod["main"]))
+  resnet_before_opt.close()
   #optimize the mod
   target = tvm.target.Target("llvm", host="llvm")
   with tvm.transform.PassContext(opt_level=3):
     mod,params=debug_optimize(mod,target,params)
+    resnet_after_opt.write(str(mod["main"]))
+    resnet_after_opt.close()

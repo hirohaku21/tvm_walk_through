@@ -1,3 +1,4 @@
+import sys
 import tvm
 from tvm import te
 from tvm import relay
@@ -17,41 +18,74 @@ class RelayVisualizer(ExprVisitor):
 
     def reset(self):
         self._node_count = 0
-        self._node_dict = {}
-        self._node_names = []
+        self._node_dict = {} #Nodeの辞書列情報を含めている。
+        self._node_names = [] #入力したモデルのNode情報がある。
         self._node_ids={}
-        self._ignore_nodes=set()
+        self._ignore_nodes=set() #集合を扱うデータ型 重複した値を格納できない。添え字やキーなどはない。ユニークな要素である。要素の順序を保持しない点
 
     def visualize(self,mod,entry_name="main",path=None):
+        
+        ## Prepare writing text file
+        #demo_before_opt = open('demo_before_optimization.txt', 'w')
+        #demo_after_opt = open('demo_after_optimization.txt', 'w')
+        
         #infer type before visit the entry function
+        #print("before mod \n{}".format(mod))
+        #demo_before_opt.write(str(mod["main"]))
+        #demo_before_opt.close()
         mod = relay.transform.InferType()(mod)
+        #print("after mod \n{}".format(mod["main"]))
+        #demo_after_opt.write(str(mod["main"]))
+        #demo_after_opt.close()
         self.reset()
-        self.visit(mod[entry_name])
+        self.visit(mod[entry_name]) #expr_functorを見てる。 Layer同士の関係を探索して辞書にしている。
         #write graph to prototxt
         def _tensor_des(tensor):
             return '{{name:"{}",dtype:{},shape:{}}}'.format(
                 tensor["name"],tensor["dtype"],list(tensor["shape"]))
+        
         path=path or self._name+'.prototxt'
+        #print(path)
+        #print("self._node_names is {}".format(self._node_names))
+        #print("self._ignore_nodes is {}".format(self._ignore_nodes))
+        #print("self._node_dict is {}".format(self._node_dict))
+        #sys.exit()
         with open(path,'w') as f:
             f.write('name : "{}"\n'.format(self._name))
-            for k in self._node_names:
+            for k in self._node_names: # 入力したモデルのNode情報がある。kにnodeXX 変数が入る
                 if k in self._ignore_nodes:
                     continue
                 node_des=self._node_dict[k]
-                topo=['top:"{}"'.format(k)]+['bottom:"{}"'.format(p) for p in node_des.get('parents',[])]
+                #print(k)
+                #print(node_des)
+                print('\n')
+                #print(node_des.get('parents',[]))
+                #print(node_des)
+                topo=['top:"{}"'.format(k)]+['bottom:"{}"'.format(p) for p in node_des.get('parents',[])] #Top Downのノードを分けている。 parentsキーがあれば返すなければ[]
+                #print("what is topo ? {}".format(topo))
+                #sys.exit()
+
                 layer_param=['idx:'+str(node_des["idx"])]+ \
                     ['in_{} {}'.format(idx,_tensor_des(i)) for idx,i in enumerate(node_des.get("inputs",[]))]+ \
-                    ['out_{} {}'.format(idx,_tensor_des(o)) for idx,o in enumerate(node_des.get("outputs",[]))]
+                    ['out_{} {}'.format(idx,_tensor_des(o)) for idx,o in enumerate(node_des.get("outputs",[]))] # Layerのパラメータを分けている。
+                print("what is layer_param ? {}".format(layer_param))
+
                 if "attrs" in node_des:
                     layer_param+=['attrs '+str(node_des["attrs"])]
                 f.write('layer {{{0}name:"{1}"{0}type:"{2}"{0}{3}{0}layer_param {{{0}  {4}\n  }}\n}}\n'.format(
                     '\n  ',k,node_des["op"],'\n  '.join(topo),'\n    '.join(layer_param)))
+                    #0    ,1,2             ,3                ,4
 
     def visit(self,expr):
+        print("Hello I am visit method !!!!!!!")
+        print(expr)
+        print('\n')
         super().visit(expr)
         self._node_count += 1
 
     def visit_var(self,var):
+        print('HI I am visit_var method !')
+        print(var)
         node_des={
             "name"     : var.name_hint,
             "op"       : "input",
@@ -60,6 +94,9 @@ class RelayVisualizer(ExprVisitor):
         self._add_node(var,node_des)
 
     def visit_constant(self,const):
+        print("Hi I am visit_constant method !")
+        print(const)
+        #print('\n')
         node_des={
             "op"       : "const",
             "outputs"  : self._get_outputs(const)
@@ -67,6 +104,9 @@ class RelayVisualizer(ExprVisitor):
         self._add_node(const,node_des)
 
     def visit_tuple(self,tup):
+        print("Hi I am visit_tuple method!")
+        print(tup)
+        #print('\n')
         super().visit_tuple(tup)
         node_des={
             "op"       : "tuple",
@@ -75,6 +115,8 @@ class RelayVisualizer(ExprVisitor):
         self._add_node(tup,node_des)
 
     def visit_function(self,func):
+        print("Hi I am visit_function method!")
+        print(func)
         for p in func.params:
             self.visit(p)
         self.visit(func.body)
@@ -86,6 +128,8 @@ class RelayVisualizer(ExprVisitor):
         self._add_node(func,node_des)
 
     def visit_let(self, let):
+        print("Hi I am visit_let method!")
+        print(let)
         super().visit_let(let)
         var_des=self._node_dict[self._node_ids[let.var]]
         var_des["op"]="var"
@@ -104,6 +148,8 @@ class RelayVisualizer(ExprVisitor):
         self._add_node(let,node_des)
 
     def visit_call(self,call):
+        print("Hi I am visit_call method !")
+        print(call)
         if isinstance(call.op,tvm.ir.Op) and call.op.name=="memory.alloc_storage":
             node_des={
                 "op"       : call.op.name.replace('.','_'),
@@ -177,6 +223,8 @@ class RelayVisualizer(ExprVisitor):
             self._add_node(call,node_des)
 
     def _update_depends(self,node_des,refs):
+        print("Hi I am _update_depends method !")
+        print(refs)
         parents,inputs=[],[]
         if len(refs)==1 and isinstance(refs[0],relay.Tuple):
             refs=refs[0]
@@ -194,6 +242,8 @@ class RelayVisualizer(ExprVisitor):
         })
 
     def _get_outputs(self,ref,node_name=None):
+        print("Hi I am _get_outputs method !")
+        print(ref)
         node_name=node_name or "Node_"+str(self._node_count)
         if isinstance(ref,relay.Var):
             if isinstance(ref.type_annotation,tvm.ir.FuncType):
@@ -256,6 +306,8 @@ class RelayVisualizer(ExprVisitor):
             raise NotImplementedError("tensor reference {}({}) is not supported".format(ref,type(ref)))
 
     def _add_node(self,node_ref,node_des):
+        print("Hi I am _add_node method !")
+        print(node_des)
         if "name" in node_des:
             node_name=node_des.pop("name")
             if node_name in self._node_dict:
@@ -332,6 +384,7 @@ class PrimExprVisualizer(ExprVisitor):
                     '\n  ',k,node_des["op"],'\n  '.join(topo),'\n    '.join(layer_param)))
 
     def visit(self,expr,ref_type=None):
+        print("Hi!")
         if expr in self._node_ids:
             return
         is_node=True
@@ -454,6 +507,7 @@ class PrimExprVisualizer(ExprVisitor):
         self._add_node(expr,node_des,ref_type)
 
     def visit_var(self,expr,ref_type=None):
+        print("KITERU?")
         node_des={
             "name"     : expr.name,
             "op"       : "var",

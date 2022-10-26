@@ -23,7 +23,7 @@ layer {
   top:"p1"
   layer_param {
     idx:2
-    out_0 {name:"p1:0",dtype:float32,shape:[100, 512, 10]}
+    out_0 {name:"p1:0",dtype:float32,shape:[125, 512, 8]}
   }
 }
 layer {
@@ -32,7 +32,7 @@ layer {
   top:"p2"
   layer_param {
     idx:3
-    out_0 {name:"p2:0",dtype:float32,shape:[1000]}
+    out_0 {name:"p2:0",dtype:float32,shape:[1, 1000]}
   }
 }
 layer {
@@ -44,9 +44,9 @@ layer {
   layer_param {
     idx:8
     in_0 {name:"p0:0",dtype:float32,shape:[1, 512]}
-    in_1 {name:"p1:0",dtype:float32,shape:[100, 512, 10]}
+    in_1 {name:"p1:0",dtype:float32,shape:[125, 512, 8]}
     out_0 {name:"Node_8:0",dtype:float32,shape:[1, 1000]}
-    attrs {'units': None, 'out_dtype': 'float32'}
+    attrs {'units': None, 'out_dtype': 'float32', 'weight_layout': 'NC8n'}
   }
 }
 layer {
@@ -58,7 +58,7 @@ layer {
   layer_param {
     idx:10
     in_0 {name:"Node_8:0",dtype:float32,shape:[1, 1000]}
-    in_1 {name:"p2:0",dtype:float32,shape:[1000]}
+    in_1 {name:"p2:0",dtype:float32,shape:[1, 1000]}
     out_0 {name:"Node_10:0",dtype:float32,shape:[1, 1000]}
   }
 }
@@ -73,8 +73,8 @@ layer {
   layer_param {
     idx:11
     in_0 {name:"p0:0",dtype:float32,shape:[1, 512]}
-    in_1 {name:"p1:0",dtype:float32,shape:[100, 512, 10]}
-    in_2 {name:"p2:0",dtype:float32,shape:[1000]}
+    in_1 {name:"p1:0",dtype:float32,shape:[125, 512, 8]}
+    in_2 {name:"p2:0",dtype:float32,shape:[1, 1000]}
     in_3 {name:"Node_10:0",dtype:float32,shape:[1, 1000]}
     out_0 {name:"Node_11:0",dtype:float32,shape:[1, 1000]}
   }
@@ -155,7 +155,7 @@ layer {
     idx:24
     in_0 {name:"p0:0",dtype:float32,shape:[1, 16, 7, 7, 32]}
     out_0 {name:"Node_24:0",dtype:float32,shape:[1, 16, 1, 1, 32]}
-    attrs {'output_size': [1, 1], 'layout': 'NCHW32c'}
+    attrs {'output_size': [1, 1], 'layout': 'NCHW32c', 'out_layout': ''}
   }
 }
 layer {
@@ -2203,7 +2203,7 @@ layer {
     idx:344
     in_0 {name:"p0:0",dtype:float32,shape:[1, 2, 112, 112, 32]}
     out_0 {name:"Node_344:0",dtype:float32,shape:[1, 2, 56, 56, 32]}
-    attrs {'pool_size': [3, 3], 'strides': [2, 2], 'padding': [1, 1, 1, 1], 'layout': 'NCHW32c', 'ceil_mode': 0}
+    attrs {'pool_size': [3, 3], 'strides': [2, 2], 'dilation': [1, 1], 'padding': [1, 1, 1, 1], 'layout': 'NCHW32c', 'out_layout': '', 'ceil_mode': 0}
   }
 }
 layer {
@@ -3658,7 +3658,7 @@ layer {
   top:"Node_503"
   layer_param {
     idx:503
-    out_0 {name:"Node_503:0",dtype:float32,shape:[100, 512, 10]}
+    out_0 {name:"Node_503:0",dtype:float32,shape:[125, 512, 8]}
   }
 }
 layer {
@@ -3667,7 +3667,7 @@ layer {
   top:"Node_504"
   layer_param {
     idx:504
-    out_0 {name:"Node_504:0",dtype:float32,shape:[1000]}
+    out_0 {name:"Node_504:0",dtype:float32,shape:[1, 1000]}
   }
 }
 layer {
@@ -3681,8 +3681,8 @@ layer {
   layer_param {
     idx:505
     in_0 {name:"Node_502:0",dtype:float32,shape:[1, 512]}
-    in_1 {name:"Node_503:0",dtype:float32,shape:[100, 512, 10]}
-    in_2 {name:"Node_504:0",dtype:float32,shape:[1000]}
+    in_1 {name:"Node_503:0",dtype:float32,shape:[125, 512, 8]}
+    in_2 {name:"Node_504:0",dtype:float32,shape:[1, 1000]}
     in_3 {name:"Node_11:0",dtype:float32,shape:[1, 1000]}
     out_0 {name:"Node_505:0",dtype:float32,shape:[1, 1000]}
   }
